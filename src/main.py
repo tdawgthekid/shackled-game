@@ -1,11 +1,14 @@
 from colorama import Fore as fc, Style as st
+from items import Inventory
+
+__version__ = "0.10"
 
 #Player Class
 class player():
     def __init__(self, name, health = 100):
         self.name = name
         self.health = health
-        self.inventory = []
+        self.inventory = Inventory()
         self.location = ""
         self.status = []
     def damage(self, damage):
@@ -19,21 +22,9 @@ class player():
         return self.health
     #Display Status
     def display_status(self):
-        print(f"\nYou have {fc.RED}{player.health}{fc.RESET} HP remaining.\n\nYour current location is {fc.YELLOW}{player.location}{fc.RESET}.\n\nCurrent keys in your inventory: ")
-        for i in player.inventory:
-            if 'Key' in i:
-                print(f"- {fc.CYAN}{i}{fc.RESET}")
-            else:
-                continue
+        print(f"\nYou have {fc.RED}{player.health}{fc.RESET} HP remaining.\n\nYour current location is {fc.YELLOW}{player.location}{fc.RESET}.")
+        player.inventory.display()
         idlechoice()
-    #Add to Inventory
-    def add_inventory_item(self, item):
-        self.inventory.append(item)
-        print(f"\n<< {fc.CYAN}{item}{fc.RESET} has been added to your inventory. >>")
-    #Remove from Inventory
-    def remove_inventory_item(self, item):
-        self.inventory.remove(item)
-        print(f"<< {fc.CYAN}{item}{fc.RESET} has been removed from your inventory. >>")
 
 
 #PROLOGUE/Initialize variables
@@ -41,7 +32,7 @@ name = input(f"\n\n{fc.BLACK}Please enter your name!{fc.RESET}\n")
 name = name.title()
 player = player(name)
 print(f"\n\n{fc.RED}*****************PROLOGUE*****************{fc.RESET}\n\nYou are a person named {fc.BLUE}{player.name}{fc.RESET} who has been wandering in the woods for hours.\nYou escaped from a prisoner transport on your way to Goh Rahn prison as the sun went down.\n{fc.MAGENTA}You still have the handcuffs on you.{fc.RESET}\nYou managed to swipe a backpack from one of the guards during your escape, but it didn't have a lot of supplies in it.\nYou ran out of food and water a while ago, and you're starting to feel hungry.\nYou're sure you heard that there was a shack out here that is always full of supplies...\n...but you can't find it anywhere. Your throat starts feeling dry, and your stomach growls...\n\n{fc.RED}-----------------SOME AMOUNT OF TIME LATER-----------------{fc.RESET}\n\nAfter wandering around for what felt like an eternity, you find a clearing you're sure was not there before.\nYou pass through the clearing, and see the silhouette of a rundown shack.\nYou carefully approach the silhouette of the shack, closely inspecting the ground with each step you take.\nYou hear a noise that startles you as you take a step.\n{fc.MAGENTA}You activate a bear trap, and shriek in pain.{fc.RESET} ({fc.RED}-75 HP{fc.RESET})"); {player.damage(75)}; print(f"Thankfully, you still have that flat head screwdriver in your backpack, but it's a little worn out.")
-player.add_inventory_item('Damaged Screwdriver')
+player.inventory.add('damaged_screwdriver')
 player.status.append('shackled')
 input(f"\nYou start to jimmy the latch on the bear trap with the screwdriver.\nAfter a bit of struggle, you successfully release the bear trap, but feel the screwdriver bending.\nIt definitely won't last much longer.\nYou let out a sigh of relief, followed by a grunt of pain.\nYou head straight for the shack, limping more and more with each step you take.\nYou reach for the handle...\n\n{fc.RED}{st.BRIGHT}------------------------------------------------------------------\n*****   *    *      *       ****   *     *   *      *****   *****\n*       *    *     * *     *       *   *     *      *       *    *\n*****   ******    *   *    *       ****      *      *****   *    *\n    *   *    *   *******   *       *   *     *      *       *    *\n*****   *    *  *       *   ****   *     *   *****  *****   *****\n------------------------------------------------------------------{fc.RESET}{st.NORMAL}\n\n(Press ENTER to continue your adventure...) ")
 player.location = "the Entrance"
@@ -85,7 +76,8 @@ def key_check():
     if seven_keys == True:
         return seven_keys
     elif seven_keys == False:
-        if 'Square Key' in player.inventory and 'Circle Key' in player.inventory and 'Triangle Key' in player.inventory and 'Cross Key' in player.inventory and 'Club Key' in player.inventory and 'Heart Key' in player.inventory and 'Diamond Key' in player.inventory:
+        required_keys = ["square_key", "circle_key", "triangle_key", "cross_key", "club_key", "heart_key", "diamond_key"]
+        if all(player.inventory.has(k) for k in required_keys):
             seven_keys = True
         else:
             seven_keys = False
@@ -93,16 +85,46 @@ def key_check():
 
 #Idle function
 def idlechoice():
-    choice = input(f"\n\n{fc.BLACK}What would you like to do? (1:Enter another room  2:Search current room  3:Check status){fc.RESET} ")
-    acceptable = ['1','2','3']
+    choice = input(f"\n\n{fc.BLACK}What would you like to do? (1:Enter another room  2:Search current room  3:Check status  4:Use item){fc.RESET} ")
+    acceptable = ['1','2','3','4']
     while choice not in acceptable:
-        choice = input(f"{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Enter another room  2:Search current room  3:Check status) {fc.RESET}")
+        choice = input(f"{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Enter another room  2:Search current room  3:Check status  4:Use item) {fc.RESET}")
     if choice == '1':
         changerooms()
     elif choice == '2':
         roomscan()
     elif choice == '3':
-        player.display_status()  
+        player.display_status()
+    elif choice == '4':
+        use_item_menu()
+
+
+#Use Item Menu
+def use_item_menu():
+    consumables = player.inventory.get_consumables()
+    if not consumables:
+        print(f"\n{fc.YELLOW}You have no usable items.{fc.RESET}")
+        idlechoice()
+        return
+    print(f"\n{fc.YELLOW}--- Consumable Items ---{fc.RESET}")
+    for i, item in enumerate(consumables, 1):
+        effect_str = ""
+        if "health" in item.effect:
+            amt = item.effect["health"]
+            effect_str = f" [{fc.GREEN}+{amt} HP{fc.RESET}]" if amt > 0 else f" [{fc.RED}{amt} HP{fc.RESET}]"
+        qty = f" (x{item.quantity})" if item.quantity > 1 else ""
+        print(f"  {i}. {fc.CYAN}{item.name}{fc.RESET}{qty} - {item.description}{effect_str}")
+    print(f"  0. Never mind")
+    choice = input(f"\n{fc.BLACK}Which item would you like to use? {fc.RESET}")
+    acceptable = [str(n) for n in range(len(consumables) + 1)]
+    while choice not in acceptable:
+        choice = input(f"{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}Which item would you like to use? {fc.RESET}")
+    if choice == '0':
+        idlechoice()
+        return
+    selected = consumables[int(choice) - 1]
+    player.inventory.use(selected.id, player)
+    idlechoice()
 
 
 #Inspect Diary Page
@@ -142,108 +164,108 @@ def east_status():
 
 #KEY ITEM CHECKS
 def square_key():
-    if "Square Key" not in player.inventory:
+    if not player.inventory.has("square_key"):
         print(f"\n{fc.GREEN}You have found the Square Key!{fc.RESET}")
-        player.add_inventory_item('Square Key')
-    elif "Square Key" in player.inventory:
+        player.inventory.add('square_key')
+    elif player.inventory.has("square_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Square Key{fc.RESET}.\n\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def circle_key():
-    if "Circle Key" not in player.inventory:
+    if not player.inventory.has("circle_key"):
         print(f"\nYou reach for the top shelf and grab a metal tin.\nYou give it a little rattle, and hear something inside.\n\n{fc.GREEN}You open the tin to find a key!{fc.RESET}")
-        player.add_inventory_item('Circle Key')
-    elif "Circle Key" in player.inventory:
+        player.inventory.add('circle_key')
+    elif player.inventory.has("circle_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Circle Key{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def triangle_and_diamond_key():
-    if "Triangle Key" not in player.inventory:
+    if not player.inventory.has("triangle_key"):
         print(f"\nYou open the top drawer.\nThe same picture of the beautiful woman from earlier is in here.\n\n{fc.GREEN}You lift the picture to find two keys!{fc.RESET}")
-        player.add_inventory_item('Diamond Key')
-        player.add_inventory_item('Triangle Key')
-    elif "Triangle Key" in player.inventory:
+        player.inventory.add('diamond_key')
+        player.inventory.add('triangle_key')
+    elif player.inventory.has("triangle_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Triangle Key{fc.RESET} and {fc.CYAN}Diamond Key{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def cross_key():
-    if "Cross Key" not in player.inventory:
+    if not player.inventory.has("cross_key"):
         print(f"\nYou slash open the spine of the book with your {fc.CYAN}Serrated Knife{fc.RESET}.\n\n{fc.GREEN}There was a key hidden inside!{fc.RESET}")
-        player.add_inventory_item('Cross Key')
-    elif "Cross Key" in player.inventory:
+        player.inventory.add('cross_key')
+    elif player.inventory.has("cross_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Cross Key{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def spade_key():
-    if "Spade Key" not in player.inventory:
+    if not player.inventory.has("spade_key"):
         print(f"\nThis mysterious lock box has many differently-shaped key holes.\nYou count seven.")
         print(f"\nUsing all seven other Suit and Shape keys, you unlock the lock box.\n\n{fc.GREEN}You have found the final key!{fc.RESET}")
-        player.add_inventory_item('Spade Key')
-    elif "Spade Key" in player.inventory:
+        player.inventory.add('spade_key')
+    elif player.inventory.has("spade_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Spade Key{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def club_key():
-    if "Club Key" not in player.inventory:
+    if not player.inventory.has("club_key"):
         print(f"\nYou pull out your slingshot and take aim.\nYou fire the pebble you found with it straight at the fake lightbulb.\nAs you suspected, the fake bulb gets knocked loose and shatters on the floor!\n\n{fc.GREEN}You find a key on the floor where the fake bulb shattered!{fc.RESET}")
-        player.add_inventory_item('Club Key')
-    elif "Club Key" in player.inventory:
+        player.inventory.add('club_key')
+    elif player.inventory.has("club_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Club Key{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def heart_key():
-    if "Heart Key" not in player.inventory:
+    if not player.inventory.has("heart_key"):
         print(f"\n{fc.GREEN}You found a heart-shaped key!{fc.RESET}")
-        player.add_inventory_item('Heart Key')
-    elif "Heart Key" in player.inventory:
+        player.inventory.add('heart_key')
+    elif player.inventory.has("heart_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Heart Key{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def poseidon_key():
-    if "Poseidon Key" not in player.inventory:
+    if not player.inventory.has("poseidon_key"):
         print(f"\nYou hear a strange noise from above as you hit the fourth button and shield your head with your hands.\nA loose brick falls from the ceiling and shatters on the floor.\n\n{fc.GREEN}It had a key inside!{fc.RESET}")
-        player.add_inventory_item('Poseidon Key')
-    elif "Poseidon Key" in player.inventory:
+        player.inventory.add('poseidon_key')
+    elif player.inventory.has("poseidon_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Poseidon's Key{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def handcuff_key():
-    if "Handcuff Key" not in player.inventory:
+    if not player.inventory.has("handcuff_key"):
         print(f"\n{fc.GREEN}You reach down and grab the key!{fc.RESET}")
-        player.add_inventory_item('Handcuff Key')
+        player.inventory.add('handcuff_key')
         print(f"\nYou recognize this key to be one made for handcuffs.\nYou try your luck...\n\n{fc.GREEN}Your handcuffs have been removed!{fc.RESET}")
         player.status.remove('shackled')
         player.status.append('unshackled')
-    elif "Handcuff Key" in player.inventory:
+    elif player.inventory.has("handcuff_key"):
         print(f"\nThis is the location where you found the {fc.CYAN}Handcuff Key{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def artwork_slab():
-    if "Artwork Slab" not in player.inventory:
+    if not player.inventory.has("artwork_slab"):
         print(f"\nYou open the drawer to find what appears to be a slab of wooden artwork.\n{fc.GREEN}You grab the strange slab of wood.{fc.RESET}")
-        player.add_inventory_item('Artwork Slab')
-    elif "Artwork Slab" in player.inventory:
+        player.inventory.add('artwork_slab')
+    elif player.inventory.has("artwork_slab"):
         print(f"\nThis is the location where you found the {fc.CYAN}Artwork Slab{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def serrated_knife():
-    if "Serrated Knife" not in player.inventory:
+    if not player.inventory.has("serrated_knife"):
         print(f"\nYou approach the bed.\nIt's a plain wire-frame bed with a sad little pillow on it.\nThere is no blanket in sight.\nYou lift the pillow to find a knife with very sharp teeth hiding underneath it.\nYou carefully place it in your backpack for later.")
-        player.add_inventory_item('Serrated Knife')
-    elif "Serrated Knife" in player.inventory:
+        player.inventory.add('serrated_knife')
+    elif player.inventory.has("serrated_knife"):
         print(f"\nThis is the location where you found the {fc.CYAN}Serrated Knife{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def slingshot():
-    if "Slingshot" not in player.inventory:
+    if not player.inventory.has("slingshot"):
         print(f"\nYou approach the strange object in the corner of the room.\n\n{fc.GREEN}It is a slingshot with a few pebbles that you could use for ammo!{fc.RESET}")
-        player.add_inventory_item('Slingshot')
-    elif "Slingshot" in player.inventory:
+        player.inventory.add('slingshot')
+    elif player.inventory.has("slingshot"):
         print(f"\nThis is the location where you found the {fc.CYAN}Slingshot{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def boltcutters():
-    if "Bolt Cutters" not in player.inventory:
+    if not player.inventory.has("bolt_cutters"):
         print(f"\nYou check the bottom shelf of the shelving unit.\nYou find some bolt cutters!")
-        player.add_inventory_item('Bolt Cutters')
-    elif "Bolt Cutters" in player.inventory:
+        player.inventory.add('bolt_cutters')
+    elif player.inventory.has("bolt_cutters"):
         print(f"\nThis is the location where you found the {fc.CYAN}Bolt Cutters{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 def diary_page():
-    if "Diary Page" not in player.inventory:
+    if not player.inventory.has("diary_page"):
         print(f"\nYou remove the folded page from the back of the photo.\nAfter a quick glance, you think it might have come from a diary...")
-        player.add_inventory_item('Diary Page')
+        player.inventory.add('diary_page')
         inspect_page()
         return
-    elif "Diary Page" in player.inventory:
+    elif player.inventory.has("diary_page"):
         print(f"\nThis is the location where you found the {fc.CYAN}Diary Page{fc.RESET}.\n{fc.YELLOW}There is nothing left of importance here.{fc.RESET}")
 
 #Enter another room function
@@ -281,10 +303,10 @@ def changerooms():
             print(f"\nYou enter the door and return to {fc.YELLOW}the Western room{fc.RESET}.")
             player.location = 'the Western room'
             idlechoice()
-        elif choice == '2' and 'Bolt Cutters' not in player.inventory:
+        elif choice == '2' and not player.inventory.has("bolt_cutters"):
             print(f"\n{fc.RED}The door is chained shut.{fc.RESET}\n\nSince you have nothing to break these chains, {fc.YELLOW}you decide to come back later{fc.RESET}.")
             idlechoice()
-        elif choice == '2' and 'Bolt Cutters' in player.inventory and north_status() == False:
+        elif choice == '2' and player.inventory.has("bolt_cutters") and north_status() == False:
             dec = input(f"\n{fc.RED}The door is chained shut.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Use bolt cutters  2:Never mind){fc.RESET} ")
             acceptable = ['1','2']
             while dec not in acceptable:
@@ -312,7 +334,7 @@ def changerooms():
             acceptable = ['1','2','3']
             while unlock not in acceptable:
                 unlock = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Unlock the door  2:Check status  3:Never mind){fc.RESET} ")
-            if unlock == '1' and "Poseidon Key" in player.inventory:
+            if unlock == '1' and player.inventory.has("poseidon_key"):
                 east_door_accessed = True
                 east_status()
                 dec = input(f"\n{fc.GREEN}You have unlocked the door!{fc.RESET}\n\n{fc.BLACK}Enter the room? (y/n){fc.RESET} ")
@@ -331,7 +353,7 @@ def changerooms():
                 elif dec == 'n':
                     print(f"\nYou have decided to remain in {fc.YELLOW}the Entrance{fc.RESET}.")
                     idlechoice()
-            elif unlock == '1' and "Poseidon Key" not in player.inventory:
+            elif unlock == '1' and not player.inventory.has("poseidon_key"):
                 print(f"\nYou try to unlock the door, but you don't have the right key for this lock.\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
                 idlechoice()
             elif unlock == '2':
@@ -423,7 +445,7 @@ def roomscan():
             changerooms()
     #EASTERN ROOM
     elif player.location == "the Eastern room":
-        if 'Slingshot' not in player.inventory:
+        if not player.inventory.has("slingshot"):
             dec = input(f"\nYou are in {fc.YELLOW}the Eastern room{fc.RESET}.\nThis room is so tiny that you could only assume it was once a supply closet.\nIt has a {fc.YELLOW}golden{fc.RESET} podium at its center with a lock box resting on it, and an object sitting in the corner on the floor.\n\n{fc.BLACK}Which one would you like to inspect? (1:Golden podium  2:Object  3:Check status  4:Return to entrance){fc.RESET} ")
             acceptable = ['1','2','3','4']
             while dec not in acceptable:
@@ -438,7 +460,7 @@ def roomscan():
                 player.display_status()
             elif dec == '4':
                 changerooms()
-        elif 'Slingshot' in player.inventory:
+        elif player.inventory.has("slingshot"):
             dec = input(f"\nYou are in {fc.YELLOW}the Eastern room{fc.RESET}.\nThis room is so tiny that you could only assume it was once a supply closet.\nIt has a {fc.YELLOW}golden{fc.RESET} podium at its center with a lock box resting on it.\n\n{fc.BLACK}What would you like to do? (1:Approach golden podium  2:Check status  3:Return to entrance){fc.RESET} ")
             acceptable = ['1','2','3']
             while dec not in acceptable:
@@ -466,10 +488,10 @@ def rugcheck():
         if dec == '1':
             print(f"\n\n{fc.RED}The rug is too heavy to move. It must be bolted in place.{fc.RESET}")
             rugcheck()
-        elif dec == '2' and "Serrated Knife" not in player.inventory:
+        elif dec == '2' and not player.inventory.has("serrated_knife"):
             print(f"\n{fc.RED}You have nothing that could be of use here at this time.{fc.RESET}\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
             idlechoice()
-        elif dec == '2' and "Serrated Knife" in player.inventory and hatch_revealed == False:
+        elif dec == '2' and player.inventory.has("serrated_knife") and hatch_revealed == False:
             useitem = input(f"\nThe {fc.CYAN}Serrated Knife{fc.RESET} you found earlier looks like it could be used here.\n\n{fc.BLACK}Would you like to use it? (y/n){fc.RESET} ")
             acceptable = ['y','n']
             while useitem not in acceptable:
@@ -505,7 +527,7 @@ def rugcheck():
             elif useitem == 'y' and 'unshackled' not in player.status and hatch_revealed == False:
                 print(f"\n\n{fc.RED}Your handcuffs restrict your movement, you cannot properly cut the rug.{fc.RESET}\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
                 idlechoice()
-        elif dec == '2' and 'Serrated Knife' in player.inventory and all_keys == False:
+        elif dec == '2' and player.inventory.has("serrated_knife") and all_keys == False:
             useitem = input(f"\nThe {fc.CYAN}Serrated Knife{fc.RESET} you found earlier looks like it could be used here.\n\n{fc.BLACK}Would you like to use it? (y/n){fc.RESET} ")
             acceptable = ['y','n']
             while useitem not in acceptable:
@@ -524,10 +546,10 @@ def rugcheck():
             print(f"\n\n{fc.RED}The rug is too heavy to move. It must be bolted in place.{fc.RESET}")
             rugcheck()
         elif dec == '2':
-            if "Serrated Knife" not in player.inventory:
+            if not player.inventory.has("serrated_knife"):
                 print(f"\n{fc.RED}You have nothing that could be of use here at this time.{fc.RESET}\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
                 idlechoice()
-            elif "Serrated Knife" in player.inventory and all_keys == True:
+            elif player.inventory.has("serrated_knife") and all_keys == True:
                 useitem = input(f"\nThe {fc.CYAN}Serrated Knife{fc.RESET} you found earlier looks like it could be used here.\n\n{fc.BLACK}Would you like to use it? (y/n){fc.RESET} ")
                 acceptable = ['y','n']
                 while useitem not in acceptable:
@@ -561,7 +583,7 @@ def rugcheck():
                 elif useitem == 'y' and 'unshackled' not in player.status:
                     print(f"\n\n{fc.RED}Your handcuffs restrict your movement, you cannot properly cut the rug.{fc.RESET}\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
                     idlechoice()
-            elif 'Serrated Knife' in player.inventory and all_keys == False:
+            elif player.inventory.has("serrated_knife") and all_keys == False:
                 useitem = input(f"\nThe {fc.CYAN}Serrated Knife{fc.RESET} you found earlier looks like it could be used here.\n\n{fc.BLACK}Would you like to use it? (y/n){fc.RESET} ")
                 acceptable = ['y','n']
                 while useitem not in acceptable:
@@ -574,17 +596,17 @@ def rugcheck():
 
 #Inspecting the Chandelier
 def chandeliercheck():
-    if 'Club Key' not in player.inventory:
+    if not player.inventory.has("club_key"):
         dec = input(f"\nYou look up at the chandelier.\nIt looks to be made of solid gold.\nThere are 6 lightbulbs attached to it, 3 of which are flickering, 2 of which are on, and 1 seems... off.\n\n{fc.BLACK}What would you like to do? (1:Inspect further  2:Check status  3:Never mind){fc.RESET} ")
         acceptable = ['1','2','3']
         while dec not in acceptable:
             dec = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Inspect further  2:Check status  3:Never mind){fc.RESET} ")
         if dec == '1':
             print(f"\nUpon closer inspection, you notice that one of the lightbulbs... is no lightbulb at all!\nIt looks like a container with something inside...\n\nYou're sure that if you can hit it with {fc.CYAN}something{fc.RESET}, it'll get knocked loose and fall to the ground.")
-            if "Slingshot" not in player.inventory:
+            if not player.inventory.has("slingshot"):
                 print(f"\n\nSince you have nothing to hit it with at the moment, {fc.YELLOW}you decide to come back later{fc.RESET}.")
                 idlechoice()
-            elif "Slingshot" in player.inventory:
+            elif player.inventory.has("slingshot"):
                 useitem = input(f"\n\n{fc.BLACK}What would you like to do? (1:Use item  2:Never mind){fc.RESET} ")
                 acceptable = ['1','2']
                 while useitem not in acceptable:
@@ -600,7 +622,7 @@ def chandeliercheck():
         elif dec == '3':
             print(f"\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
             idlechoice()
-    elif 'Club Key' in player.inventory:
+    elif player.inventory.has("club_key"):
         club_key()
         idlechoice()
 
@@ -616,17 +638,17 @@ def deskcheck():
         acceptable = ['1','2','3','4','5']
         while dec not in acceptable:
             dec = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Inspect photo  2:Open left drawer  3:Open middle drawer  4:Open right drawer  5:Never mind){fc.RESET} ")
-        if dec == '1' and 'Diary Page' not in player.inventory:
+        if dec == '1' and not player.inventory.has("diary_page"):
             print("\nA photo of a beautiful woman.\nThe back of the frame is a bit sticky.\nYou turn the frame over and see nothing...\n...but after carefully running your hand along the seam near the pins at the top, you feel some tape residue.\nYou hurriedly move the pins aside and open the back of the frame.\nYou find a folded page taped to the back of the photo.")
             diary_page()
             deskcheck()
-        elif dec == '1' and 'Diary Page' in player.inventory:
+        elif dec == '1' and player.inventory.has("diary_page"):
             print("\nThe woman looks just as beautiful as she did before.")
             deskcheck()
-        elif dec == '2' and desk_drawer_unlocked == False and 'Square Key' not in player.inventory:
+        elif dec == '2' and desk_drawer_unlocked == False and not player.inventory.has("square_key"):
             print(f"\n{fc.RED}This drawer is locked.{fc.RESET}\nIt looks like it could use some sort of key.\nThe lock is {fc.MAGENTA}square{fc.RESET}-shaped.")
             deskcheck()
-        elif dec == '2' and desk_drawer_unlocked == False and 'Square Key' in player.inventory:
+        elif dec == '2' and desk_drawer_unlocked == False and player.inventory.has("square_key"):
             desk_drawer_unlocked = True
             print(f"\nThis drawer is locked, but not for long.\n{fc.GREEN}You unlock the drawer with the Square Key!{fc.RESET}")
             artwork_slab()
@@ -637,10 +659,10 @@ def deskcheck():
         elif dec == '3' and desk_drawer_looted == False:
             desk_drawer_looted = True
             print(f"\n{fc.GREEN}You open the middle drawer to find some medical supplies!{fc.RESET}")
-            player.add_inventory_item('Painkillers')
-            player.add_inventory_item('Peroxide')
-            player.add_inventory_item('Bandage')
-            player.add_inventory_item('Bandage')
+            player.inventory.add('painkillers')
+            player.inventory.add('peroxide')
+            player.inventory.add('bandage')
+            player.inventory.add('bandage')
             print(f"\nYou take all of the painkillers, splash your leg with peroxide, and use the bandages to cover your wound.\n\n{fc.GREEN}(HP fully restored!){fc.RESET} "); player.damage(-100)
             deskcheck()
         elif dec == '3' and desk_drawer_looted == True:
@@ -657,17 +679,17 @@ def deskcheck():
         acceptable = ['1','2','3','4','5']
         while dec not in acceptable:
             dec = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Inspect photo  2:Open left drawer  3:Open middle drawer  4:Open right drawer  5:Never mind){fc.RESET} ")
-        if dec == '1' and 'Diary Page' not in player.inventory:
+        if dec == '1' and not player.inventory.has("diary_page"):
             print("\nA photo of a beautiful woman.\nThe back of the frame is a bit sticky.\nYou turn the frame over and see nothing...\n...but after carefully running your hand along the seam near the pins at the top, you feel some tape residue.\nYou hurriedly move the pins aside and open the back of the frame.\nYou find a folded page taped to the back of the photo.")
             diary_page()
             deskcheck()
-        elif dec == '1' and 'Diary Page' in player.inventory:
+        elif dec == '1' and player.inventory.has("diary_page"):
             print("\nThe woman looks just as beautiful as she did before.")
             deskcheck()
-        elif dec == '2' and desk_drawer_unlocked == False and 'Square Key' not in player.inventory:
+        elif dec == '2' and desk_drawer_unlocked == False and not player.inventory.has("square_key"):
             print(f"\n{fc.RED}This drawer is locked.{fc.RESET}\nIt looks like it could use some sort of key.\nThe lock is {fc.MAGENTA}square{fc.RESET}-shaped.")
             deskcheck()
-        elif dec == '2' and desk_drawer_unlocked == False and 'Square Key' in player.inventory:
+        elif dec == '2' and desk_drawer_unlocked == False and player.inventory.has("square_key"):
             desk_drawer_unlocked = True
             print(f"\nThis drawer is locked, but not for long.\n{fc.GREEN}You unlock the drawer with the Square Key!{fc.RESET}\nThere is a mysterious slab inside...")
             artwork_slab()
@@ -678,10 +700,10 @@ def deskcheck():
         elif dec == '3' and desk_drawer_looted == False:
             desk_drawer_looted = True
             print(f"\n{fc.GREEN}You open the middle drawer to find some medical supplies!{fc.RESET}")
-            player.add_inventory_item('Painkillers')
-            player.add_inventory_item('Peroxide')
-            player.add_inventory_item('Bandage')
-            player.add_inventory_item('Bandage')
+            player.inventory.add('painkillers')
+            player.inventory.add('peroxide')
+            player.inventory.add('bandage')
+            player.inventory.add('bandage')
             print(f"\nYou take all of the painkillers, splash your leg with peroxide, and use the bandages to cover your wound.\n\n{fc.GREEN}(HP fully restored!){fc.RESET} "); player.damage(-100)
             deskcheck()
         elif dec == '3' and desk_drawer_looted == True:
@@ -712,12 +734,12 @@ def bookcasecheck():
             book_acceptable = ['1','2']
             while book_dec not in book_acceptable:
                 book_dec = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Inspect further  2:Never mind){fc.RESET} ")
-            if book_dec == '1' and 'Serrated Knife' not in player.inventory:
+            if book_dec == '1' and not player.inventory.has("serrated_knife"):
                 print(f"\nYou grab the yellow book to inspect it closer.\nThe book feels a little heavy, so you open it face down and shake it.\n{fc.GREEN}A small key falls out of the book and onto the floor!{fc.RESET}")
                 handcuff_key()
                 print(f"\nAs you go to place the book down on the bookcase, you feel a bump in its spine.\nPerhaps if you had {fc.MAGENTA}something sharp{fc.RESET} you could investigate this mysterious bump...\n\n{fc.YELLOW}You place the book down on the bookcase and decide to come back later.{fc.RESET}")
                 idlechoice()
-            elif book_dec == '1' and 'Serrated Knife' in player.inventory:
+            elif book_dec == '1' and player.inventory.has("serrated_knife"):
                 print(f"\nYou grab the yellow book to inspect it closer.\nThe book feels a little heavy, so you open it face down and shake it.\n{fc.GREEN}A small key falls out of the book and onto the floor!{fc.RESET}")
                 handcuff_key()
                 print(f"\nAs you go to place the book down on the bookcase, you feel a bump in its spine.")
@@ -750,12 +772,12 @@ def bookcasecheck():
             book_acceptable = ['1','2']
             while book_dec not in book_acceptable:
                 book_dec = input(f"\n\n{fc.BLACK}What would you like to do? (1:Inspect further  2:Never mind){fc.RESET} ")
-            if book_dec == '1' and 'Serrated Knife' not in player.inventory:
+            if book_dec == '1' and not player.inventory.has("serrated_knife"):
                 print(f"\nYou grab the yellow book to inspect it closer.\nThe book feels a little heavy, so you open it face down and shake it.\n{fc.GREEN}A small key falls out of the book and onto the floor!{fc.RESET}")
                 handcuff_key()
                 print(f"\nAs you go to place the book down on the bookcase, you feel a bump in its spine.\nPerhaps if you had {fc.MAGENTA}something sharp{fc.RESET} you could investigate this mysterious bump...\n\n{fc.YELLOW}You place the book down on the bookcase and decide to come back later.{fc.RESET}")
                 idlechoice()
-            elif book_dec == '1' and 'Serrated Knife' in player.inventory:
+            elif book_dec == '1' and player.inventory.has("serrated_knife"):
                 print(f"\nYou grab the yellow book to inspect it closer.\nThe book feels a little heavy, so you open it face down and shake it.\n{fc.GREEN}A small key falls out of the book and onto the floor!{fc.RESET}")
                 handcuff_key()
                 print(f"\nAs you go to place the book down on the bookcase, you feel a bump in its spine.")
@@ -764,17 +786,17 @@ def bookcasecheck():
             elif book_dec == '2':
                 print(f"\n{fc.YELLOW}You decide to leave the yellow book alone for now, but take note of its existence as you walk away.{fc.RESET}")
                 idlechoice()    
-        elif dec == '1' and yellow_book_discovered == True and 'Handcuff Key' not in player.inventory:
+        elif dec == '1' and yellow_book_discovered == True and not player.inventory.has("handcuff_key"):
             book_dec = input(f"\nYou take a closer look at the beat-up brown books.\nThey are packed tightly against one another across the top two shelves.\nThe bottom shelf, however, has a loose book leaning to its side.\nYou pull that book out to discover a bright {fc.YELLOW}yellow{fc.RESET} book that appears to be in mint condition hidden on its side behind it!\n\n{fc.BLACK}What would you like to do? (1:Inspect further  2:Never mind){fc.RESET} ")
             book_acceptable = ['1','2']
             while book_dec not in book_acceptable:
                 book_dec = input(f"\n\n{fc.BLACK}What would you like to do? (1:Inspect further  2:Never mind){fc.RESET} ")
-            if book_dec == '1' and 'Serrated Knife' not in player.inventory:
+            if book_dec == '1' and not player.inventory.has("serrated_knife"):
                 print(f"\nYou grab the yellow book to inspect it closer.\nThe book feels a little heavy, so you open it face down and shake it.\n{fc.GREEN}A small key falls out of the book and onto the floor!{fc.RESET}")
                 handcuff_key()
                 print(f"\nAs you go to place the book down on the bookcase, you feel a bump in its spine.\nPerhaps if you had {fc.MAGENTA}something sharp{fc.RESET} you could investigate this mysterious bump...\n\n{fc.YELLOW}You place the book down on the bookcase and decide to come back later.{fc.RESET}")
                 idlechoice()
-            elif book_dec == '1' and 'Serrated Knife' in player.inventory:
+            elif book_dec == '1' and player.inventory.has("serrated_knife"):
                 print(f"\nYou grab the yellow book to inspect it closer.\nThe book feels a little heavy, so you open it face down and shake it.\n{fc.GREEN}A small key falls out of the book and onto the floor!{fc.RESET}")
                 handcuff_key()
                 print(f"\nAs you go to place the book down on the bookcase, you feel a bump in its spine.")
@@ -783,13 +805,13 @@ def bookcasecheck():
             elif book_dec == '2':
                 print(f"\n{fc.YELLOW}You decide to leave the yellow book alone for now, but take note of its existence as you walk away.{fc.RESET}")
                 idlechoice()
-        elif dec == '1' and 'Serrated Knife' not in player.inventory and 'Handcuff Key' in player.inventory:
+        elif dec == '1' and not player.inventory.has("serrated_knife") and player.inventory.has("handcuff_key"):
             print(f"\nYou are still missing something sharp to cut open the spine of the book.\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
             idlechoice()
-        elif dec == '1' and 'Serrated Knife' in player.inventory and 'Handcuff Key' in player.inventory and 'Cross Key' not in player.inventory:
+        elif dec == '1' and player.inventory.has("serrated_knife") and player.inventory.has("handcuff_key") and not player.inventory.has("cross_key"):
             cross_key()
             idlechoice()
-        elif dec == '1' and 'Cross Key' and 'Handcuff Key' in player.inventory:
+        elif dec == '1' and player.inventory.has("cross_key") and player.inventory.has("handcuff_key"):
             handcuff_key()
             cross_key()
             idlechoice()
@@ -812,20 +834,20 @@ def bookcasecheck():
 def artworkcheck():
     global artwork_visited
     global slab_placed
-    if artwork_visited == False and 'Artwork Slab' not in player.inventory:
+    if artwork_visited == False and not player.inventory.has("artwork_slab"):
         artwork_visited = True
         print(f"\nYou approach the wooden artwork and immediately recognize it as the Vitruvian Man, but something seems... off.\nThere is a very specific... section... missing.\nPerhaps you can find the missing wood elsewhere.")
         idlechoice()
-    elif artwork_visited == False and 'Artwork Slab' in player.inventory:
+    elif artwork_visited == False and player.inventory.has("artwork_slab"):
         artwork_visited = True
         slab_placed = True
         print(f"\nYou approach the wooden artwork and immediately recognize it as the Vitruvian Man, but something seems... off.\nThere is a very specific... section... missing.\nYou realize that the slab of wood that you grabbed earlier should slot perfectly into place here.\n\n...\n\nIt was a tight fit, but the wooden slab has been returned to its rightful place.\n\n{fc.GREEN}You hear a distinct clicking sound!{fc.RESET}")
         west_status()
         idlechoice()
-    elif artwork_visited == True and slab_placed == False and 'Artwork Slab' not in player.inventory:
+    elif artwork_visited == True and slab_placed == False and not player.inventory.has("artwork_slab"):
         print(f"\nThe Vitruvian Man, without a shred of dignity.\n{fc.YELLOW}You decide to come back once you have found a way to help this... unfortunate man.{fc.RESET}")
         idlechoice()
-    elif artwork_visited == True and slab_placed == False and 'Artwork Slab' in player.inventory:
+    elif artwork_visited == True and slab_placed == False and player.inventory.has("artwork_slab"):
         slab_placed = True
         print(f"\nThe Vitruvian Man, without a shred of dignity.\nYou realize that the slab of wood that you grabbed earlier should slot perfectly into place here.\n\n...\n\nIt was a tight fit, but the wooden slab has been returned to its rightful place.\n\n{fc.GREEN}You hear a distinct clicking sound!{fc.RESET}")
         west_status()
@@ -876,11 +898,11 @@ def end_table_bottom():
     global end_bottom_visited
     if end_bottom_visited == False:
         print(f"\nYou open the bottom drawer.\n{fc.GREEN}You find a ton of healing items inside!{fc.RESET}")
-        player.add_inventory_item('Bandage')
-        player.add_inventory_item('Painkillers')
-        player.add_inventory_item('Peroxide')
-        player.add_inventory_item('Antidote')
-        player.add_inventory_item('Snack Bar')
+        player.inventory.add('bandage')
+        player.inventory.add('painkillers')
+        player.inventory.add('peroxide')
+        player.inventory.add('antidote')
+        player.inventory.add('snack_bar')
     elif end_bottom_visited == True:
         print(f"\n{fc.RED}You have already looted this drawer for all of its contents.{fc.RESET}")
 
@@ -919,12 +941,12 @@ def fridgecheck():
             if dec == '1':
                 fridge_looted = True
                 print(f"\n\n{fc.GREEN}You successfully win your unnecessarily long battle with the fridge!{fc.RESET}\nThere are many goodies inside, and you take them all.")
-                player.add_inventory_item('Banana')
-                player.add_inventory_item('Banana')
-                player.add_inventory_item('Apple')
-                player.add_inventory_item('Orange')
-                player.add_inventory_item('Bottle of water')
-                player.add_inventory_item('Bottle of water')
+                player.inventory.add('banana')
+                player.inventory.add('banana')
+                player.inventory.add('apple')
+                player.inventory.add('orange')
+                player.inventory.add('bottle_of_water')
+                player.inventory.add('bottle_of_water')
                 idlechoice()
         elif dec == '2':
             print(f"\n\n{fc.YELLOW}You give up and walk away.{fc.RESET}\n\n{fc.MAGENTA}It's a good thing nobody's around to have witnessed you backing down from a simple fridge... that would be embarrassing.{fc.RESET}")
@@ -978,10 +1000,10 @@ def podiumcheck():
             accept = ['1','2']
             while choice not in accept:
                 choice = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Enter code  2:Check inventory) ")
-            while choice == '2' and 'Diary Page' in player.inventory:
+            while choice == '2' and player.inventory.has("diary_page"):
                 inspect_page()
                 choice = '1'
-            while choice == '2' and 'Diary Page' not in player.inventory:
+            while choice == '2' and not player.inventory.has("diary_page"):
                 print(f"\n\n{fc.RED}You don't have anything in your inventory that could be of assistance here.{fc.RESET}")
                 choice = '1'
             if choice == '1':
@@ -1014,14 +1036,14 @@ def podiumcheck():
         elif dec == '2' and circle_puzzle == True:
             print(f"\n\n{fc.YELLOW}You have already solved this puzzle, there is nothing left for you to do here.{fc.RESET}")
             podiumcheck()
-        elif dec == '3' and triangle_puzzle == False and 'Serrated Knife' in player.inventory:
+        elif dec == '3' and triangle_puzzle == False and player.inventory.has("serrated_knife"):
             dec = input(f"\nThere is an engraving on this podium, as well as a red button under a plastic cover that is held closed by a lock.\nNo key you have seen before can remove this lock.\nThe engraving reads:\n\n<The Hero with the {fc.CYAN}broken blade{fc.RESET} must sacrifice more than his {fc.CYAN}weapon{fc.RESET} to escape the {fc.RED}Devil{fc.RESET}.>\n\nYou're not quite sure what it means, but you feel like one of your items can be used here...\n\n{fc.BLACK}Which item would you like to try to use? (1:Damaged Screwdriver  2:Serrated Knife  3:Never mind){fc.RESET} ")
             acceptable = ['1','2','3']
             while dec not in acceptable:
                 dec = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}Which item would you like to try to use? (1:Damaged Screwdriver  2:Serrated Knife  3:Never mind){fc.RESET} ")
             if dec == '1':
                 triangle_puzzle = True
-                print(f"\nYou jam your {fc.CYAN}Damaged Screwdriver{fc.RESET} into the lock and begin to twist.\n\n{fc.RED}The screwdriver breaks in half, injuring your hand in the process! (-25 HP){fc.RESET}"); player.damage (25); player.remove_inventory_item('Damaged Screwdriver'); print(f"Your trusty screwdriver falls to the floor...\n\n{fc.GREEN}The lock has been opened!{fc.RESET}\n\n{fc.MAGENTA}You hurriedly push the button, and hear a click.{fc.RESET}")
+                print(f"\nYou jam your {fc.CYAN}Damaged Screwdriver{fc.RESET} into the lock and begin to twist.\n\n{fc.RED}The screwdriver breaks in half, injuring your hand in the process! (-25 HP){fc.RESET}"); player.damage (25); player.inventory.remove('damaged_screwdriver'); print(f"Your trusty screwdriver falls to the floor...\n\n{fc.GREEN}The lock has been opened!{fc.RESET}\n\n{fc.MAGENTA}You hurriedly push the button, and hear a click.{fc.RESET}")
                 podiumcheck()
             elif dec == '2':
                 print(f"\nYour {fc.CYAN}Serrated Knife{fc.RESET} does not fit into the lock.\n\n{fc.YELLOW}Perhaps you should try a different item...{fc.RESET}")
@@ -1029,14 +1051,14 @@ def podiumcheck():
             elif dec == '3':
                 print(f"\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
                 idlechoice()
-        elif dec == '3' and triangle_puzzle == False and 'Serrated Knife' not in player.inventory:
+        elif dec == '3' and triangle_puzzle == False and not player.inventory.has("serrated_knife"):
             dec = input(f"\nThere is an engraving on this podium, as well as a red button under a plastic cover that is held closed by a lock.\nNo key you have seen before can remove this lock.\nThe engraving reads:\n\n<The Hero with the {fc.CYAN}broken blade{fc.RESET} must sacrifice more than his {fc.CYAN}weapon{fc.RESET} to escape the {fc.RED}Devil{fc.RESET}.>\n\nYou're not quite sure what it means, but you feel like one of your items can be used here...\n\n{fc.BLACK}Which item would you like to try to use? (1:Damaged Screwdriver  2:Serrated Knife  3:Never mind){fc.RESET} ")
             acceptable = ['1','2']
             while dec not in acceptable:
                 dec = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}Which item would you like to try to use? (1:Damaged Screwdriver  2:Serrated Knife  3:Never mind){fc.RESET} ")
             if dec == '1':
                 triangle_puzzle = True
-                print(f"\nYou jam your {fc.CYAN}Damaged Screwdriver{fc.RESET} into the lock and begin to twist.\n\n{fc.RED}The screwdriver breaks in half, injuring your hand in the process! (-25 HP){fc.RESET}, "); player.damage (25); player.remove_inventory_item('Damaged Screwdriver'); print(f"({fc.RED}{player.health}{fc.RESET} HP remaining)\nYour trusty screwdriver falls to the floor...\n\n{fc.GREEN}The lock has been opened!{fc.RESET}\n\n{fc.MAGENTA}You hurriedly push the button, and hear a click.{fc.RESET}")
+                print(f"\nYou jam your {fc.CYAN}Damaged Screwdriver{fc.RESET} into the lock and begin to twist.\n\n{fc.RED}The screwdriver breaks in half, injuring your hand in the process! (-25 HP){fc.RESET}, "); player.damage (25); player.inventory.remove('damaged_screwdriver'); print(f"({fc.RED}{player.health}{fc.RESET} HP remaining)\nYour trusty screwdriver falls to the floor...\n\n{fc.GREEN}The lock has been opened!{fc.RESET}\n\n{fc.MAGENTA}You hurriedly push the button, and hear a click.{fc.RESET}")
                 podiumcheck()
             elif dec == '2':
                 print(f"\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
@@ -1049,11 +1071,11 @@ def podiumcheck():
             acceptable = ['1','2']
             while dec not in acceptable:
                 dec = input(f"\n\n{fc.RED}Oh, come on, this one's easy.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Destroy the beautiful velvet cover  2:Walk away without feeling guilty about destroying something so beautiful){fc.RESET} ")                
-            if dec == '1' and 'Serrated Knife' in player.inventory:
+            if dec == '1' and player.inventory.has("serrated_knife"):
                 cross_puzzle = True
                 print(f"\nYou could not care less about someone else's hard work.\nYou pull out your {fc.CYAN}Serrated Knife{fc.RESET} and slash away at the innocent, beautiful velvet cover on the podium.\n\n{fc.GREEN}Congratulations on being a jerk, you found a red button!{fc.RESET}\n\n{fc.MAGENTA}You push the red button and hear a click!{fc.RESET}")
                 podiumcheck()
-            elif dec == '1' and 'Serrated Knife' not in player.inventory:
+            elif dec == '1' and not player.inventory.has("serrated_knife"):
                 print(f"\nYou could not care less about someone else's hard work, but you do not have an item you could use here.\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
             elif dec == '2':
                 print(f"\nYou leave the beautiful velvet cover intact. {fc.RED}C O W A R D !{fc.RESET}\nBefore you can react, the velvet cover flies off of the podium and wraps itself around your face.\n\nWhy... do... you... smell... chloroform...? ...\n\n..................\n\nYou come to after a few minutes.\nThe sheer embarrassment of losing to a rug causes you to slap yourself in the face a bit too hard. {fc.RED}(-15 HP){fc.RESET}"); player.damage(15)
@@ -1075,7 +1097,7 @@ def podiumcheck():
                 accept = ['1','2']
                 while choice not in accept:
                     choice = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Enter code  2:Check inventory) ")
-                while choice == '2' and 'Diary Page' in player.inventory:
+                while choice == '2' and player.inventory.has("diary_page"):
                     inspect_page()
                     choice = '1'
                 if choice == '1':
@@ -1108,14 +1130,14 @@ def podiumcheck():
             elif dec == '2' and circle_puzzle == True:
                 print(f"\n\n{fc.YELLOW}You have already solved this puzzle, there is nothing left for you to do here.{fc.RESET}")
                 podiumcheck()
-            elif dec == '3' and triangle_puzzle == False and 'Serrated Knife' in player.inventory:
+            elif dec == '3' and triangle_puzzle == False and player.inventory.has("serrated_knife"):
                 dec = input(f"\nThere is an engraving on this podium, as well as a red button under a plastic cover that is held closed by a lock.\nNo key you have seen before can remove this lock.\nThe engraving reads:\n\n<The Hero with the {fc.CYAN}broken blade{fc.RESET} must sacrifice more than his {fc.CYAN}weapon{fc.RESET} to escape the {fc.RED}Devil{fc.RESET}.>\n\nYou're not quite sure what it means, but you feel like one of your items can be used here...\n\n{fc.BLACK}Which item would you like to try to use? (1:Damaged Screwdriver  2:Serrated Knife  3:Never mind){fc.RESET} ")
                 acceptable = ['1','2','3']
                 while dec not in acceptable:
                     dec = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}Which item would you like to try to use? (1:Damaged Screwdriver  2:Serrated Knife  3:Never mind){fc.RESET} ")
                 if dec == '1':
                     triangle_puzzle = True
-                    print(f"\nYou jam your {fc.CYAN}Damaged Screwdriver{fc.RESET} into the lock and begin to twist.\n\n{fc.RED}The screwdriver breaks in half, injuring your hand in the process! (-25 HP){fc.RESET}"); player.damage (25); player.remove_inventory_item('Damaged Screwdriver'); print(f"Your trusty screwdriver falls to the floor...\n\n{fc.GREEN}The lock has been opened!{fc.RESET}\n\n{fc.MAGENTA}You hurriedly push the button, and hear a click.{fc.RESET}")
+                    print(f"\nYou jam your {fc.CYAN}Damaged Screwdriver{fc.RESET} into the lock and begin to twist.\n\n{fc.RED}The screwdriver breaks in half, injuring your hand in the process! (-25 HP){fc.RESET}"); player.damage (25); player.inventory.remove('damaged_screwdriver'); print(f"Your trusty screwdriver falls to the floor...\n\n{fc.GREEN}The lock has been opened!{fc.RESET}\n\n{fc.MAGENTA}You hurriedly push the button, and hear a click.{fc.RESET}")
                     podiumcheck()
                 elif dec == '2':
                     print(f"\nYour {fc.CYAN}Serrated Knife{fc.RESET} does not fit into the lock.\n\n{fc.YELLOW}Perhaps you should try a different item...{fc.RESET}")
@@ -1123,14 +1145,14 @@ def podiumcheck():
                 elif dec == '3':
                     print(f"\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
                     idlechoice()
-            elif dec == '3' and triangle_puzzle == False and 'Serrated Knife' not in player.inventory:
+            elif dec == '3' and triangle_puzzle == False and not player.inventory.has("serrated_knife"):
                 dec = input(f"\nThere is an engraving on this podium, as well as a red button under a plastic cover that is held closed by a lock.\nNo key you have seen before can remove this lock.\nThe engraving reads:\n\n<The Hero with the {fc.CYAN}broken blade{fc.RESET} must sacrifice more than his {fc.CYAN}weapon{fc.RESET} to escape the {fc.RED}Devil{fc.RESET}.>\n\nYou're not quite sure what it means, but you feel like one of your items can be used here...\n\n{fc.BLACK}Which item would you like to try to use? (1:Damaged Screwdriver  2:Serrated Knife  3:Never mind){fc.RESET} ")
                 acceptable = ['1','2']
                 while dec not in acceptable:
                     dec = input(f"\n\n{fc.RED}Please enter a valid input.{fc.RESET}\n\n{fc.BLACK}Which item would you like to try to use? (1:Damaged Screwdriver  2:Serrated Knife  3:Never mind){fc.RESET} ")
                 if dec == '1':
                     triangle_puzzle = True
-                    print(f"\nYou jam your {fc.CYAN}Damaged Screwdriver{fc.RESET} into the lock and begin to twist.\n\n{fc.RED}The screwdriver breaks in half, injuring your hand in the process! (-25 HP){fc.RESET}"); player.damage (25); player.remove_inventory_item('Damaged Screwdriver'); print(f"Your trusty screwdriver falls to the floor...\n\n{fc.GREEN}The lock has been opened!{fc.RESET}\n\n{fc.MAGENTA}You hurriedly push the button, and hear a click.{fc.RESET}")
+                    print(f"\nYou jam your {fc.CYAN}Damaged Screwdriver{fc.RESET} into the lock and begin to twist.\n\n{fc.RED}The screwdriver breaks in half, injuring your hand in the process! (-25 HP){fc.RESET}"); player.damage (25); player.inventory.remove('damaged_screwdriver'); print(f"Your trusty screwdriver falls to the floor...\n\n{fc.GREEN}The lock has been opened!{fc.RESET}\n\n{fc.MAGENTA}You hurriedly push the button, and hear a click.{fc.RESET}")
                     podiumcheck()
                 elif dec == '2':
                     print(f"\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
@@ -1143,11 +1165,11 @@ def podiumcheck():
                 acceptable = ['1','2']
                 while dec not in acceptable:
                     dec = input(f"\n\n{fc.RED}Oh, come on, this one's easy.{fc.RESET}\n\n{fc.BLACK}What would you like to do? (1:Destroy the beautiful velvet cover  2:Walk away without feeling guilty about destroying something so beautiful){fc.RESET} ")                
-                if dec == '1' and 'Serrated Knife' in player.inventory:
+                if dec == '1' and player.inventory.has("serrated_knife"):
                     cross_puzzle = True
                     print(f"\nYou could not care less about someone else's hard work.\nYou pull out your {fc.CYAN}Serrated Knife{fc.RESET} and slash away at the innocent, beautiful velvet cover on the podium.\n\n{fc.GREEN}Congratulations on being a jerk, you found a red button!{fc.RESET}\n\n{fc.MAGENTA}You push the red button and hear a click!{fc.RESET}")
                     podiumcheck()
-                elif dec == '1' and 'Serrated Knife' not in player.inventory:
+                elif dec == '1' and not player.inventory.has("serrated_knife"):
                     print(f"\nYou could not care less about someone else's hard work, but you do not have an item you could use here.\n\n{fc.YELLOW}You decide to come back later.{fc.RESET}")
                 elif dec == '2':
                     print(f"\nYou leave the beautiful velvet cover intact. {fc.RED}C O W A R D !{fc.RESET}\nBefore you can react, the velvet cover flies off of the podium and wraps itself around your face.\n\nWhy... do... you... smell... chloroform...? ...\n\n..................\n\nYou come to after a few minutes.\nThe sheer embarrassment of losing to a rug causes you to slap yourself in the face a bit too hard. {fc.RED}(-15 HP){fc.RESET}"); player.damage(15)
