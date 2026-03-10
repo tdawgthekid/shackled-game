@@ -1,7 +1,7 @@
 from colorama import Fore as fc, Style as st
 from items import Inventory
 
-__version__ = "0.10"
+__version__ = "0.20"
 
 #Player Class
 class player():
