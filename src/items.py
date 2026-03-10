@@ -119,29 +119,29 @@ ITEM_CATALOG = {
     "club_key":      {"name": "Club Key",      "type": "key", "description": "A key shaped like a club."},
     "heart_key":     {"name": "Heart Key",     "type": "key", "description": "A heart-shaped key."},
     "spade_key":     {"name": "Spade Key",     "type": "key", "description": "The final key."},
-    "poseidon_key":  {"name": "Poseidon Key",  "type": "key", "description": "A key bearing the mark of the sea god."},
+    "poseidon_key":  {"name": "Poseidon Key",  "type": "key", "description": "A key bearing the mark of the God of the Sea."},
     "handcuff_key":  {"name": "Handcuff Key",  "type": "key", "description": "A small key that fits handcuffs."},
     # Tools
-    "damaged_screwdriver": {"name": "Damaged Screwdriver", "type": "key", "description": "A worn-out flat head screwdriver."},
+    "damaged_screwdriver": {"name": "Damaged Screwdriver", "type": "key", "description": "A worn flat head screwdriver."},
     "serrated_knife":      {"name": "Serrated Knife",      "type": "key", "description": "A sharp knife with a serrated blade."},
     "bolt_cutters":        {"name": "Bolt Cutters",        "type": "key", "description": "Heavy-duty bolt cutters."},
     "slingshot":           {"name": "Slingshot",            "type": "key", "description": "A slingshot with a few pebbles."},
     # Puzzle items
-    "artwork_slab": {"name": "Artwork Slab", "type": "key", "description": "A mysterious slab with artwork on it."},
+    "artwork_slab": {"name": "Artwork Slab", "type": "key", "description": "A mysterious slab ordaned with an artistic design."},
     "diary_page":   {"name": "Diary Page",   "type": "key", "description": "A torn page from someone's diary."},
     # Food
-    "banana":          {"name": "Banana",          "type": "consumable", "description": "A ripe banana.",            "effect": {"health": 10}},
-    "apple":           {"name": "Apple",           "type": "consumable", "description": "A crisp apple.",            "effect": {"health": 10}},
-    "orange":          {"name": "Orange",          "type": "consumable", "description": "A juicy orange.",           "effect": {"health": 10}},
-    "bottle_of_water": {"name": "Bottle of Water", "type": "consumable", "description": "A refreshing bottle of water.", "effect": {"health": 15}},
+    "banana":          {"name": "Banana",          "type": "consumable", "description": "A ripe banana. Some mild bruising never hurt anyone...",          "effect": {"health": 10}},
+    "apple":           {"name": "Apple",           "type": "consumable", "description": "A crisp apple. Don't eat the seeds.",                             "effect": {"health": 10}},
+    "orange":          {"name": "Orange",          "type": "consumable", "description": "A juicy orange. The peel would be good for spaghetti sauce.",     "effect": {"health": 10}},
+    "bottle_of_water": {"name": "Bottle of Water", "type": "consumable", "description": "A refreshing bottle of water. You'll finish this in one gulp.",   "effect": {"health": 15}},
     # Medical
-    "painkillers": {"name": "Painkillers", "type": "consumable", "description": "Pain relief medication.",            "effect": {"health": 20}},
-    "peroxide":    {"name": "Peroxide",    "type": "consumable", "description": "Hydrogen peroxide for wounds.",      "effect": {"health": 15}},
-    "bandage":     {"name": "Bandage",     "type": "consumable", "description": "A roll of bandage.",                 "effect": {"health": 15}},
-    "antidote":    {"name": "Antidote",    "type": "consumable", "description": "A vial of antidote.",                "effect": {"health": 30}},
-    "snack_bar":   {"name": "Snack Bar",   "type": "consumable", "description": "A tasty snack bar.",                 "effect": {"health": 10}},
+    "painkillers": {"name": "Painkillers", "type": "consumable", "description": "A bottle of pain relief medication. Not intended for small children.",    "effect": {"health": 20}},
+    "peroxide":    {"name": "Peroxide",    "type": "consumable", "description": "A small bottle of hydrogen peroxide. Useful for cleaning wounds.",        "effect": {"health": 15}},
+    "bandage":     {"name": "Bandage",     "type": "consumable", "description": "A short roll of gauze. Takes approximately 4 seconds to apply.",          "effect": {"health": 15}},
+    "antidote":    {"name": "Antidote",    "type": "consumable", "description": "A vial of antidote. [INSERT SARCASTIC COMMENT ABOUT NO POISON EXISTING]", "effect": {"health": 30}},
+    "snack_bar":   {"name": "Snack Bar",   "type": "consumable", "description": "A chewy snack bar dipped in chocolate. Please don't sue me.",             "effect": {"health": 10}},
     # Special
-    "black_potion": {"name": "Black Potion", "type": "consumable", "description": "A deathly black potion.", "effect": {"health": -40}},
+    "black_potion": {"name": "Black Potion", "type": "consumable", "description": "A pitch black potion. It smells like death, just like you.",            "effect": {"health": -40}},
 }
 
 
