@@ -1,2 +1,2 @@
 # shackled-game
-Personal project - Text-based adventure game that I cooked up during a programing course. Should be fun.
+Personal project - Text-based adventure game that I cooked up during a programming course. Should be fun.
